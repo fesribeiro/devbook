@@ -12,8 +12,6 @@ import (
 func main () {
 	config.Load()
 
-	fmt.Println(config.ApiPort, config.StrDBConnection)
-
-	fmt.Println("Starting server on port 5000...")
+	fmt.Printf("Starting server on port %d...", config.ApiPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.ApiPort), router.GenerateRouter()))
 }
