@@ -13,15 +13,14 @@ type User struct {
 	Name  		string 		`json:"name,omitempty" validate:"required,min=5,max=50"`
 	Nick  		string 		`json:"nick,omitempty" validate:"required"`
 	Email 		string 		`json:"email,omitempty" validate:"required,email"`
-	Password  string 		`json:"password,omitempty" validate:"required"`
+	Password  string 		`json:"-" validate:"required"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 
-func (u User) Validate() ([]string, error) {
+func (u *User) Validate() ([]string, error) {
 	validate := validator.New()
-	err := validate.Struct(u)
-	if err != nil {
+	if err := validate.Struct(u); err != nil {
 		errors := []string{}
 		for _, err := range err.(validator.ValidationErrors) {
 			errors = append(errors, fmt.Sprintf("Field '%s' is not valid: %s", strings.ToLower(err.Field()), err.Tag()))
