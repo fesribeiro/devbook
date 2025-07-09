@@ -4,10 +4,10 @@ import (
 	"devbook-api/src/db"
 	"devbook-api/src/models"
 	"devbook-api/src/repositories"
+	"devbook-api/src/responses"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -15,28 +15,44 @@ func Store(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		responses.Error(w, http.StatusUnprocessableEntity, err)
+		return
 	}
 
 	var user models.User
 
 	if err = json.Unmarshal(body, &user); err != nil {
-		log.Fatal(err)
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	strErros, err := user.Validate();
+	if err != nil {
+		responses.JSON(w, http.StatusBadRequest, struct {
+			Error []string `json:"error"`
+		}{
+			Error: strErros,
+		})
+		return
 	}
 
 	db, err := db.Connect()
 
 	if err != nil {
-		log.Fatal(err)
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 
-	userID, err := repositories.NewUserRepository(db).Store(user)
+	lastIDCreated, err := repositories.NewUserRepository(db).Store(user)
+	user.ID = lastIDCreated
 
 	if err != nil {
-		log.Fatal(err)
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("ID Created: %d", userID)))
+	fmt.Println("User created with ID:", user)
+	responses.JSON(w, http.StatusCreated, user)
 }
 
 func FindAll(w http.ResponseWriter, r *http.Request) {
