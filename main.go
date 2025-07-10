@@ -12,6 +12,6 @@ import (
 func main () {
 	config.Load()
 
-	fmt.Printf("Starting server on port %d...", config.ApiPort)
+	fmt.Printf("Starting server on port %d...\n", config.ApiPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.ApiPort), router.GenerateRouter()))
 }

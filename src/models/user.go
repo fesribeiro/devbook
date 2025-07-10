@@ -13,7 +13,7 @@ type User struct {
 	Name  		string 		`json:"name,omitempty" validate:"required,min=5,max=50"`
 	Nick  		string 		`json:"nick,omitempty" validate:"required"`
 	Email 		string 		`json:"email,omitempty" validate:"required,email"`
-	Password  string 		`json:"-" validate:"required"`
+	Password  string 		`json:"-"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 

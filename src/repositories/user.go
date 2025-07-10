@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	app_errors "devbook-api/src/errors"
 	"devbook-api/src/models"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 type user struct {
@@ -16,6 +18,11 @@ func NewUserRepository(db *sql.DB) *user {
 }
 
 func (userRepository user) Store(user models.User) (uint64, error) {
+
+	if user.Password == "" {
+		return 0, errors.New("password is required") 
+	}
+
 	db := userRepository.db
 	defer db.Close()
 
@@ -77,7 +84,6 @@ func (userRepository user) FindById(ID uint64) (*models.User, error) {
 	defer db.Close()
 
 	userDB, err := db.Query("SELECT * FROM users WHERE id = ?", ID)
-
 	
 	if err != nil {
 		return nil, err
@@ -98,4 +104,104 @@ func (userRepository user) FindById(ID uint64) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (userRepository user) Update(ID uint64, userData *models.User) error {
+	exists, err := userRepository.exists(ID, userData)
+
+	if err != nil {
+		return err
+	}
+
+	if exists != nil {
+		return app_errors.NewNotFoundError(strings.Join(exists, ";"))
+	}
+
+	db := userRepository.db
+
+	statement, err := db.Prepare("UPDATE users set name = ?, nick = ?, email = ? WHERE id = ?")
+
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err := statement.Exec(userData.Name, userData.Nick, userData.Email, ID); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (userRepository user) exists(ID uint64, userData *models.User) ([]string, error) {
+
+	var user models.User
+
+	errChan := make(chan string)
+
+	db := userRepository.db
+
+	userDB, err := db.Query("SELECT nick, email FROM users WHERE id = ?", ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer userDB.Close()
+
+	if !userDB.Next() {
+		return []string{"User do not exists"}, nil
+	}
+
+	if err = userDB.Scan(&user.Nick, &user.Email); err != nil {
+		return nil, err
+	}
+
+	go func () {
+		nickNameExists, err := db.Query("SELECT nick FROM users WHERE nick = ? AND id != ?", userData.Nick, ID)
+
+		if err != nil {
+			errChan <- err.Error()
+			return
+		}
+
+		defer nickNameExists.Close()
+
+		if nickNameExists.Next() {
+			errChan <- "nickname already exists"
+			return
+		}
+
+		errChan <- ""
+	}()
+
+	go func () {
+		emailExists, err := db.Query("SELECT email FROM users WHERE email = ? AND id != ? LIMIT 1", userData.Email, ID)
+
+		if err != nil {
+			errChan <- err.Error()
+			return
+		}
+
+		defer emailExists.Close()
+
+		if emailExists.Next() {
+			errChan <- "email already exists"
+			return
+		}
+
+		errChan <- ""
+	}()
+
+	var queryErrors []string
+	
+	for range 2 {
+		msg := <-errChan
+		if msg != "" {
+			queryErrors = append(queryErrors, msg)
+		}
+	}
+
+	return queryErrors, nil
 }

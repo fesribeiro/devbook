@@ -88,7 +88,7 @@ func FindByID(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseUint(param["userId"], 10, 64)
 
 	if err != nil {
-		responses.Error(w, http.StatusInternalServerError, err)
+		responses.Error(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -118,7 +118,54 @@ func FindByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("updating user"))
+	param := mux.Vars(r)
+
+	userID, err := strconv.ParseUint(param["userId"], 10, 64)
+
+	if err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		responses.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var user models.User
+
+	if err = json.Unmarshal(body, &user); err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	strErros, err := user.Validate();
+	if err != nil {
+		responses.JSON(w, http.StatusBadRequest, struct {
+			Error []string `json:"error"`
+		}{
+			Error: strErros,
+		})
+		return
+	}
+
+	db, err := db.Connect()
+
+	if err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	defer db.Close()
+
+	if err := repositories.NewUserRepository(db).Update(userID, &user); err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {

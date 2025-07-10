@@ -25,7 +25,7 @@ var usersRoutes = []Route{
 		WithAuth: false,
 	},
 	{
-		URI: "/users",
+		URI: "/users/{userId}",
 		Method: http.MethodPut,
 		Func: userController.Update,
 		WithAuth: false,
