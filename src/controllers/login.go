@@ -47,7 +47,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := auth.GenerateToken(userDB.ID)
+	token, err := auth.GenerateToken(userDB.ID)
+
+	if err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
 	
 	responses.JSON(w, http.StatusAccepted, map[string]string{
 		"access_token": token,
