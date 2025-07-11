@@ -1,4 +1,4 @@
-package userController
+package controllers
 
 import (
 	"devbook-api/src/db"
@@ -32,7 +32,7 @@ func Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	strErros, err := user.Validate();
+	strErros, err := user.Validate("store");
 	if err != nil {
 		responses.JSON(w, http.StatusBadRequest, struct {
 			Error []string `json:"error"`
@@ -141,7 +141,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	strErros, err := user.Validate();
+	strErros, err := user.Validate("update");
 	if err != nil {
 		responses.JSON(w, http.StatusBadRequest, struct {
 			Error []string `json:"error"`
@@ -169,5 +169,27 @@ func Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("deleting user"))
+	param := mux.Vars(r)
+
+	userID, err := strconv.ParseUint(param["userId"], 10, 64)
+
+	if err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+
+	db, err := db.Connect()
+
+	if err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := repositories.NewUserRepository(db).Delete(userID); err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
 }

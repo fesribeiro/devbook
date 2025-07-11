@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	app_errors "devbook-api/src/errors"
 	"devbook-api/src/models"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -18,13 +17,7 @@ func NewUserRepository(db *sql.DB) *user {
 }
 
 func (userRepository user) Store(user models.User) (uint64, error) {
-
-	if user.Password == "" {
-		return 0, errors.New("password is required") 
-	}
-
 	db := userRepository.db
-	defer db.Close()
 
 	statement, err := db.Prepare("INSERT INTO users (name, nick, email, password) VALUES (?,?,?,?)")
 
@@ -51,7 +44,6 @@ func (userRepository user) Store(user models.User) (uint64, error) {
 
 func (userRepository user) Find(search string) ([]models.User, error) {
 	db := userRepository.db
-	defer db.Close()
 
 	searchFormatted := fmt.Sprintf("%%%s%%", search)
 
@@ -81,7 +73,6 @@ func (userRepository user) Find(search string) ([]models.User, error) {
 
 func (userRepository user) FindById(ID uint64) (*models.User, error) {
 	db := userRepository.db
-	defer db.Close()
 
 	userDB, err := db.Query("SELECT * FROM users WHERE id = ?", ID)
 	
@@ -204,4 +195,49 @@ func (userRepository user) exists(ID uint64, userData *models.User) ([]string, e
 	}
 
 	return queryErrors, nil
+}
+
+
+func (userRepository user) Delete(ID uint64) error {
+	db := userRepository.db
+
+	statement, err := db.Prepare("DELETE FROM users WHERE id = ?")
+
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err := statement.Exec(ID); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (userRepository user) FindByEmail(email string) (*models.User, error) {
+	db := userRepository.db
+
+	userDB, err := db.Query("SELECT * FROM users WHERE email = ?", email)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	defer userDB.Close()
+
+	var user models.User
+
+	if userDB.Next() {
+
+		if err := userDB.Scan(&user.ID, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+
+	} else {
+		return nil, app_errors.NewNotFoundError("User not found")
+	}
+
+	return &user, nil
 }
