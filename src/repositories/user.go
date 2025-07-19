@@ -24,7 +24,7 @@ func (userRepository user) Store(user models.User) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	
+
 	defer statement.Close()
 
 	result, err := statement.Exec(user.Name, user.Nick, user.Email, user.Password)
@@ -49,12 +49,12 @@ func (userRepository user) Find(search string) ([]models.User, error) {
 
 	usersDB, err := db.Query("SELECT * FROM users WHERE name like ? or nick like ?", searchFormatted, searchFormatted)
 
-	var users []models.User
-	
+	users := []models.User{}
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer usersDB.Close()
 
 	for usersDB.Next() {
@@ -70,16 +70,15 @@ func (userRepository user) Find(search string) ([]models.User, error) {
 	return users, nil
 }
 
-
 func (userRepository user) FindById(ID uint64) (*models.User, error) {
 	db := userRepository.db
 
 	userDB, err := db.Query("SELECT * FROM users WHERE id = ?", ID)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer userDB.Close()
 
 	var user models.User
@@ -121,7 +120,7 @@ func (userRepository user) Update(ID uint64, userData *models.User) error {
 	if _, err := statement.Exec(userData.Name, userData.Nick, userData.Email, ID); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -149,7 +148,7 @@ func (userRepository user) exists(ID uint64, userData *models.User) ([]string, e
 		return nil, err
 	}
 
-	go func () {
+	go func() {
 		nickNameExists, err := db.Query("SELECT nick FROM users WHERE nick = ? AND id != ?", userData.Nick, ID)
 
 		if err != nil {
@@ -167,7 +166,7 @@ func (userRepository user) exists(ID uint64, userData *models.User) ([]string, e
 		errChan <- ""
 	}()
 
-	go func () {
+	go func() {
 		emailExists, err := db.Query("SELECT email FROM users WHERE email = ? AND id != ? LIMIT 1", userData.Email, ID)
 
 		if err != nil {
@@ -186,7 +185,7 @@ func (userRepository user) exists(ID uint64, userData *models.User) ([]string, e
 	}()
 
 	var queryErrors []string
-	
+
 	for range 2 {
 		msg := <-errChan
 		if msg != "" {
@@ -196,7 +195,6 @@ func (userRepository user) exists(ID uint64, userData *models.User) ([]string, e
 
 	return queryErrors, nil
 }
-
 
 func (userRepository user) Delete(ID uint64) error {
 	db := userRepository.db
@@ -212,7 +210,7 @@ func (userRepository user) Delete(ID uint64) error {
 	if _, err := statement.Exec(ID); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -220,11 +218,11 @@ func (userRepository user) FindByEmail(email string) (*models.User, error) {
 	db := userRepository.db
 
 	userDB, err := db.Query("SELECT * FROM users WHERE email = ?", email)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer userDB.Close()
 
 	var user models.User

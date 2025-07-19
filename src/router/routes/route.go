@@ -8,12 +8,11 @@ import (
 )
 
 type Route struct {
-	URI 	   string
+	URI      string
 	Method   string
-	Func 	   func(http.ResponseWriter, *http.Request)
+	Func     func(http.ResponseWriter, *http.Request)
 	WithAuth bool
 }
-
 
 func ConfigRoute(r *mux.Router) *mux.Router {
 	routes := usersRoutes
@@ -21,10 +20,11 @@ func ConfigRoute(r *mux.Router) *mux.Router {
 
 	for _, route := range routes {
 
-		if (route.WithAuth) {
-			r.HandleFunc(route.URI, middlewares.Authenticated(route.Func)).Methods(route.Method)
+		if route.WithAuth {
+			r.HandleFunc(route.URI,
+				middlewares.Logger(middlewares.Authenticated(route.Func))).Methods(route.Method)
 		} else {
-			r.HandleFunc(route.URI, route.Func).Methods(route.Method)
+			r.HandleFunc(route.URI, middlewares.Logger(route.Func)).Methods(route.Method)
 		}
 
 	}

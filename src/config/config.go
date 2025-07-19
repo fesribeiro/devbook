@@ -11,8 +11,8 @@ import (
 
 var (
 	StrDBConnection = ""
-	ApiPort = 0
-	SecretKey []byte
+	ApiPort         = 0
+	SecretKey       []byte
 )
 
 func Load() {
@@ -21,14 +21,14 @@ func Load() {
 	if err = godotenv.Load(); err != nil {
 		log.Fatal(err)
 	}
-	
+
 	ApiPort, err = strconv.Atoi(os.Getenv("API_PORT"))
 
 	if err != nil {
 		ApiPort = 5000
 	}
 
-	StrDBConnection = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", 
+	StrDBConnection = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),

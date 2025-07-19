@@ -10,14 +10,13 @@ import (
 )
 
 type User struct {
-	ID    		uint64 		`json:"id,omitempty"`
-	Name  		string 		`json:"name,omitempty" validate:"required,min=5,max=50"`
-	Nick  		string 		`json:"nick,omitempty" validate:"required"`
-	Email 		string 		`json:"email,omitempty" validate:"required,email"`
-	Password  string 		`json:"password"`
+	ID        uint64    `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty" validate:"required,min=5,max=50"`
+	Nick      string    `json:"nick,omitempty" validate:"required"`
+	Email     string    `json:"email,omitempty" validate:"required,email"`
+	Password  string    `json:"-"`
 	CreatedAt time.Time `json:"createdAt"`
 }
-
 
 func (u *User) Validate(step string) ([]string, error) {
 	validate := validator.New()

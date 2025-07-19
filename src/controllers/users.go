@@ -8,7 +8,6 @@ import (
 	"devbook-api/src/responses"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -32,7 +31,7 @@ func Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	strErros, err := user.Validate("store");
+	strErros, err := user.Validate("store")
 	if err != nil {
 		responses.JSON(w, http.StatusBadRequest, struct {
 			Error []string `json:"error"`
@@ -57,14 +56,13 @@ func Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("User created with ID:", user)
 	responses.JSON(w, http.StatusCreated, user)
 }
 
 func Find(w http.ResponseWriter, r *http.Request) {
 	search := strings.ToLower(r.URL.Query().Get("search"))
 
-	db, err := db.Connect() 
+	db, err := db.Connect()
 
 	if err != nil {
 		responses.Error(w, http.StatusInternalServerError, err)
@@ -73,13 +71,13 @@ func Find(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	users, err := repositories.NewUserRepository(db).Find(search)
-	
+
 	if err != nil {
 		responses.Error(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	responses.JSON(w, http.StatusCreated, users) 
+	responses.JSON(w, http.StatusOK, users)
 }
 
 func FindByID(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +139,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	strErros, err := user.Validate("update");
+	strErros, err := user.Validate("update")
 	if err != nil {
 		responses.JSON(w, http.StatusBadRequest, struct {
 			Error []string `json:"error"`
@@ -177,7 +175,6 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		responses.Error(w, http.StatusBadRequest, err)
 		return
 	}
-
 
 	db, err := db.Connect()
 
